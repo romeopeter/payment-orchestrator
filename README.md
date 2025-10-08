@@ -1,3 +1,3 @@
-# Payment Orchestration System prototype
+# POP Prototype
 
-Manage payment across different gateways from one service.
+Manage payment flows across different gateways from one platform.
