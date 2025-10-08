@@ -1,3 +1,3 @@
-# Payment Orchestration System implemented in Flask and ReactJS
+# Payment Orchestration System prototype
 
-Multi-payment gateway solution prototype
+Manage payment across different gateways from one service.
