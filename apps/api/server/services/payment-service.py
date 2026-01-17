@@ -104,3 +104,81 @@ class PaystackService(PaymentService):
 
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()
+
+
+class MoniepointService(PaymentService):
+    """Payment initialization and verification for Moniepoint charge"""
+
+    def __init__(self):
+        # Moniepoint secret key from environment
+        self.secret_key = os.getenv("MONIEPOINT_SECRET_KEY")
+        # Base URL for Moniepoint API
+        self.base_url = os.getenv("MONIEPOINT_BASE_URL", "https://api.moniepoint.com/v1")
+
+    def initialize_charge(self, email, amount, metadata=None):
+        """
+        Initialize a transaction with Moniepoint.
+        """
+        url = f"{self.base_url}/payments/initialize"
+        headers = {
+            "Authorization": f"Bearer {self.secret_key}",
+            "Content-type": "application/json",
+        }
+
+        # Moniepoint specific payload structure (Simulated)
+        payload = {
+            "customerEmail": email,
+            "amount": amount,
+            "metaData": metadata or {},
+            "currency": "NGN"
+        }
+        resp = requests.post(url=url, json=payload, headers=headers)
+        return resp.json()
+
+    def verify_payment(self, reference):
+        """
+        Verify Moniepoint transaction status.
+        """
+        url = f"{self.base_url}/payments/verify/{reference}"
+        headers = {"Authorization": f"Bearer {self.secret_key}"}
+        resp = requests.get(url=url, headers=headers)
+
+        return resp.json()
+
+    def submit_otp(self, otp, reference):
+        """
+        Submit OTP for Moniepoint (Simulated endpoint).
+        """
+        url = f"{self.base_url}/payments/submit-otp"
+        headers = {
+            "Authorization": f"Bearer {self.secret_key}",
+            "Content-type": "application/json",
+        }
+
+        payload = {"otp": otp, "transactionReference": reference}
+        resp = requests.post(url=url, json=payload, headers=headers)
+        return resp.json()
+
+    def charge(self, email, amount, bank=None, card=None, metadata=None):
+        """
+        Direct charge for Moniepoint (Simulated).
+        """
+        url = f"{self.base_url}/payments/charge"
+        headers = {
+            "Authorization": f"Bearer {self.secret_key}",
+            "Content-type": "application/json",
+        }
+
+        payload = {
+            "email": email,
+            "amount": amount,
+            "metadata": metadata or {}
+        }
+        
+        if bank:
+            payload["bankDetails"] = bank
+        if card:
+            payload["cardDetails"] = card
+
+        resp = requests.post(url=url, json=payload, headers=headers)
+        return resp.json()
