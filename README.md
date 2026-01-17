@@ -6,7 +6,7 @@ This project provides a unified interface for payment initialization, verificati
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Unified API Interface:** Interact with multiple gateways (Paystack, Moniepoint) through a consistent set of endpoints.
 - **Gateway Abstraction Layer:** Easily extend to new providers by subclassing the `PaymentsService`.
@@ -19,7 +19,7 @@ This project provides a unified interface for payment initialization, verificati
 
 ---
 
-## 🧩 Tech Stack
+## Tech Stack
 
 | Layer       | Tech                                  |
 | ----------- | ------------------------------------- |
@@ -143,6 +143,6 @@ class FlutterwaveService(PaymentsService):
 ## Author
 
 Built by Romeo Peter — software developer & Product Strategist.<br />
-📍 Abuja, Nigeria <br />
-🔗 [duowork.tech](duowork.tech) <br />
+Abuja, Nigeria <br />
+[duowork.tech](duowork.tech) <br />
 -->
