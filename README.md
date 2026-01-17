@@ -68,12 +68,13 @@ REDIS_URL=redis://localhost:6379/0
 ## Install dependencies
 `pip install -r requirements.txt`
 
-## Run database migrations (if using Alembic)
-`flask db upgrade`
+<!-- ## Run database migrations (if using Alembic)
+`flask db upgrade` -->
 
 ## Start the Flask app
 `flask run`
 
+<!--  
 ## Endpoint implementation
 
 | Method | Endpoint               | Description                              | Auth |
@@ -107,6 +108,7 @@ pytest --maxfail=1 --disable-warnings -q
 docker build -t payment-orchestration-backend .
 docker run -p 5000:5000 --env-file .env payment-orchestration-backend
 ```
+-->
 
 ## Extending Gateway
 1. Create a new file in payments/ (e.g., flutterwave.py).
