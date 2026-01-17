@@ -9,7 +9,7 @@ load_dotenv()
 class Config:
     """Server configuration"""
 
-    SWAGGER = {"title": "Payment Orchestration API", "uiversion": 3, "openapi": "3.0.2"}
+    SWAGGER = {"title": "Kurudu Payment Orchestration API", "uiversion": 3, "openapi": "3.0.2"}
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
 
     # SQLALCHEMY
