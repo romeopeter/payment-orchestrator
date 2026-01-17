@@ -9,7 +9,7 @@ from .utils.logger import logger
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object("app.config.Config")
+    app.config.from_object("server.config.Config")
 
     db.init_app(app)
     jwt.init_app(app)
