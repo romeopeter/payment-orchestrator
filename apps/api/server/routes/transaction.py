@@ -7,13 +7,20 @@ from server.services.transaction_service import (
     update_transaction_status,
 )
 from server.models.user_model import User
-from server.services.payment_service import PaystackService
+from server.services.payment_service import PaystackService, MoniepointService
+from server.utils.logger import logger
 
 # ------------------------------------------------------------------------------------------
 
 
 txn_bp = Blueprint("transaction", __name__)
-paystack = PaystackService()
+
+# Service Registry for dynamic gateway selection
+services = {
+    "paystack": PaystackService(),
+    "moniepoint": MoniepointService()
+}
+
 
 
 @txn_bp.route("/", methods=["POST"])
@@ -114,34 +121,64 @@ def initiate_payment():
 
     data = request.json()
     customer_id = int(get_jwt_identity())
+    gateway = data.get("gateway", "paystack")
+    logger.info("Payment initiation started", extra_info={"customer_id": customer_id, "gateway": gateway, "amount": data["amount"]})
+    
+    # 0. Get the correct service
+    payment_service = services.get(gateway)
+    if not payment_service:
+        logger.error("Unsupported gateway", extra_info={"gateway": gateway})
+        return jsonify({"error": f"Unsupported gateway: {gateway}", "status": 400}), 400
 
+    # Fetch user for email (required by Paystack and Moniepoint)
     user = User.query.get(customer_id)
 
-    # Store pending transaction in DB
+    # 1. Store pending transaction in our database
     txn = create_transaction(
         amount=data["amount"],
-        gateway="paystack",
+        gateway=gateway,
         customer_id=customer_id,
         txn_metadata=data.get("txn_metadata"),
     )
 
-    # Initialize charge with Paystack
-    paystack_resp = paystack.initialize_charge(
-        email=user.email,
-        amount=data["amount"],
-        metadata={"internal_gateway_ref": txn.gateway_ref},
-    )
+    # 2. Check if this is a direct charge (no-redirect flow)
+    # If card or bank info is provided, we use the charge endpoint
+    bank = data.get("bank")
+    card = data.get("card")
+
+    if bank or card:
+        # Initialize direct charge
+        payment_resp = payment_service.charge(
+            email=user.email,
+            amount=data["amount"],
+            bank=bank,
+            card=card,
+            metadata={"internal_gateway_ref": txn.gateway_ref},
+        )
+    else:
+        # Standard initialization (returns authorization_url for redirect)
+        payment_resp = payment_service.initialize_charge(
+            email=user.email,
+            amount=data["amount"],
+            metadata={"internal_gateway_ref": txn.gateway_ref},
+        )
+
+    # 3. Update internal transaction status if response is immediate
+    gateway_status = payment_resp.get("data", {}).get("status")
+    if gateway_status:
+        update_transaction_status(txn.gateway_ref, gateway_status)
 
     return jsonify(
         {
             "data": {
                 "internal_gateway_ref": txn.gateway_ref,
-                "gateway_resp": paystack_resp,
+                "gateway_resp": payment_resp,
             },
-            "msg": "Payment initialization successful",
+            "msg": "Payment initiation processed",
             "status": 200,
         }
     )
+
 
 
 @txn_bp.route("/verify/<reference>", methods=["GET"])
@@ -165,15 +202,22 @@ def verify_payment(reference):
     
 
     customer_id = int(get_jwt_identity())
+    logger.info("Payment verification requested", extra_info={"reference": reference, "customer_id": customer_id})
 
     # Fetch transaction from DB and check ownership
     txn = get_transaction_by_gateway_ref(reference)
     if not txn or txn.customer_id != customer_id:
+        logger.warning("Transaction not found or unauthorized access", extra_info={"reference": reference, "customer_id": customer_id})
         return jsonify({"error": "Transaction not found", "status": 404})
 
-    paystack_resp = paystack.verify_payment(reference=reference)
+    # Get the correct service
+    payment_service = services.get(txn.gateway)
+    if not payment_service:
+        return jsonify({"error": f"Unsupported gateway: {txn.gateway}", "status": 400}), 400
 
-    gateway_status = paystack_resp.get("data", {}).get("status")
+    payment_resp = payment_service.verify_payment(reference=reference)
+
+    gateway_status = payment_resp.get("data", {}).get("status")
 
     if gateway_status:
         update_transaction_status(reference, gateway_status)
@@ -183,9 +227,74 @@ def verify_payment(reference):
             "data": {
                 "internal_gateway_ref": txn.gateway_ref,
                 "gateway_status": gateway_status,
-                "gateway_response": paystack_resp,
+                "gateway_response": payment_resp,
             },
             "msg": "Payment verification returned successfully",
+            "status": 200,
+        }
+    )
+
+
+@txn_bp.route("/submit-otp", methods=["POST"])
+@jwt_required()
+def submit_otp():
+    """
+    Submit OTP for a pending transaction
+    ---
+    tags:
+      - Transactions
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              otp:
+                type: string
+              reference:
+                type: string
+    responses:
+      200:
+        description: OTP submission result
+      404:
+        description: Transaction not found or unauthorized
+    """
+
+    data = request.json
+    otp = data.get("otp")
+    reference = data.get("reference")
+    customer_id = int(get_jwt_identity())
+    logger.info("OTP submission requested", extra_info={"reference": reference, "customer_id": customer_id})
+
+    # 1. Fetch transaction from DB and verify ownership
+    txn = get_transaction_by_gateway_ref(reference)
+    if not txn or txn.customer_id != customer_id:
+        logger.warning("Transaction not found for OTP submission", extra_info={"reference": reference, "customer_id": customer_id})
+        return jsonify({"error": "Transaction not found or unauthorized", "status": 404}), 404
+
+    # 2. Get the correct service
+    payment_service = services.get(txn.gateway)
+    if not payment_service:
+        return jsonify({"error": f"Unsupported gateway: {txn.gateway}", "status": 400}), 400
+
+    # 3. Submit OTP via the service
+    payment_resp = payment_service.submit_otp(otp=otp, reference=reference)
+    
+    gateway_status = payment_resp.get("data", {}).get("status")
+
+    # 4. Update internal transaction status if the gateway provides one
+    if gateway_status:
+        update_transaction_status(reference, gateway_status)
+
+    return jsonify(
+        {
+            "data": {
+                "internal_gateway_ref": txn.gateway_ref,
+                "gateway_status": gateway_status,
+                "gateway_response": payment_resp,
+            },
+            "msg": "OTP submitted successfully",
             "status": 200,
         }
     )
