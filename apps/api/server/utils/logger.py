@@ -3,6 +3,8 @@ import json
 import datetime
 from flask import request, has_request_context
 
+# ------------------------------------------------------
+
 class JsonFormatter(logging.Formatter):
     """
     Custom formatter to output logs in JSON format.
@@ -49,6 +51,7 @@ def setup_logger(name="kurudu"):
         handler = logging.StreamHandler()
         handler.setFormatter(JsonFormatter())
         logger.addHandler(handler)
+        
         # Prevent propagation to the root logger to avoid duplicate logs in some environments
         logger.propagate = False
 
