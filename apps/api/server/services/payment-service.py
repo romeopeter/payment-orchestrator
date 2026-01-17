@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import requests
+from server.utils.logger import logger
 
 # --------------------------------------
 
@@ -50,6 +51,7 @@ class PaystackService(PaymentService):
         }
 
         payload = {"email": email, "amount": amount, "metadata": metadata or {}}
+        logger.info("Initializing Paystack charge", extra_info={"email": email, "amount": amount})
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()
 
@@ -60,6 +62,7 @@ class PaystackService(PaymentService):
         url = f"{self.base_url}/transaction/verify/{reference}"
         headers = {"Authorization": f"Bearer {self.secret_key}"}
         # GET request for verification per Paystack docs
+        logger.info("Verifying Paystack payment", extra_info={"reference": reference})
         resp = requests.get(url=url, headers=headers)
 
         return resp.json()
@@ -76,6 +79,7 @@ class PaystackService(PaymentService):
         }
 
         payload = {"otp": otp, "reference": reference}
+        logger.info("Submitting Paystack OTP", extra_info={"reference": reference})
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()
 
@@ -102,6 +106,7 @@ class PaystackService(PaymentService):
         if card:
             payload["card"] = card
 
+        logger.info("Direct charging Paystack", extra_info={"email": email, "amount": amount})
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()
 
@@ -132,6 +137,7 @@ class MoniepointService(PaymentService):
             "metaData": metadata or {},
             "currency": "NGN"
         }
+        logger.info("Initializing Moniepoint charge", extra_info={"email": email, "amount": amount})
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()
 
@@ -141,6 +147,7 @@ class MoniepointService(PaymentService):
         """
         url = f"{self.base_url}/payments/verify/{reference}"
         headers = {"Authorization": f"Bearer {self.secret_key}"}
+        logger.info("Verifying Moniepoint payment", extra_info={"reference": reference})
         resp = requests.get(url=url, headers=headers)
 
         return resp.json()
@@ -180,5 +187,6 @@ class MoniepointService(PaymentService):
         if card:
             payload["cardDetails"] = card
 
+        logger.info("Direct charging Moniepoint", extra_info={"email": email, "amount": amount})
         resp = requests.post(url=url, json=payload, headers=headers)
         return resp.json()

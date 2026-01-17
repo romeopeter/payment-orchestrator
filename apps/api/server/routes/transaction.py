@@ -8,6 +8,7 @@ from server.services.transaction_service import (
 )
 from server.models.user_model import User
 from server.services.payment_service import PaystackService, MoniepointService
+from server.utils.logger import logger
 
 # ------------------------------------------------------------------------------------------
 
@@ -121,10 +122,12 @@ def initiate_payment():
     data = request.json()
     customer_id = int(get_jwt_identity())
     gateway = data.get("gateway", "paystack")
+    logger.info("Payment initiation started", extra_info={"customer_id": customer_id, "gateway": gateway, "amount": data["amount"]})
     
     # 0. Get the correct service
     payment_service = services.get(gateway)
     if not payment_service:
+        logger.error("Unsupported gateway", extra_info={"gateway": gateway})
         return jsonify({"error": f"Unsupported gateway: {gateway}", "status": 400}), 400
 
     # Fetch user for email (required by Paystack and Moniepoint)
@@ -199,10 +202,12 @@ def verify_payment(reference):
     
 
     customer_id = int(get_jwt_identity())
+    logger.info("Payment verification requested", extra_info={"reference": reference, "customer_id": customer_id})
 
     # Fetch transaction from DB and check ownership
     txn = get_transaction_by_gateway_ref(reference)
     if not txn or txn.customer_id != customer_id:
+        logger.warning("Transaction not found or unauthorized access", extra_info={"reference": reference, "customer_id": customer_id})
         return jsonify({"error": "Transaction not found", "status": 404})
 
     # Get the correct service
@@ -260,10 +265,12 @@ def submit_otp():
     otp = data.get("otp")
     reference = data.get("reference")
     customer_id = int(get_jwt_identity())
+    logger.info("OTP submission requested", extra_info={"reference": reference, "customer_id": customer_id})
 
     # 1. Fetch transaction from DB and verify ownership
     txn = get_transaction_by_gateway_ref(reference)
     if not txn or txn.customer_id != customer_id:
+        logger.warning("Transaction not found for OTP submission", extra_info={"reference": reference, "customer_id": customer_id})
         return jsonify({"error": "Transaction not found or unauthorized", "status": 404}), 404
 
     # 2. Get the correct service
