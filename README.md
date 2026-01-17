@@ -2,35 +2,33 @@
 
 A scalable, API-first monorepo (backend + frontend) for orchestrating multi-gateway payments across **Paystack**, **Flutterwave**, and **Moniepoint**.
 
-This project provides a unified interface for payment initialization, verification, OTP handling, and webhook management — designed to make multi-gateway operations seamless, reliable, and developer-friendly.
+This project provides a unified interface for payment initialization, verification, OTP handling, and webhook management designed to make multi-gateway operations seamless, reliable, and developer-friendly.
 
 ---
 
-## 🚀 Features
+## Features
 
-- **Unified API Interface:** Interact with multiple gateways (Paystack, Moniepoint) through a consistent set of endpoints.  
-- **Gateway Abstraction Layer:** Easily extend to new providers by subclassing the `PaymentsService`.  
-- **Secure Authentication:** Email + password authentication with JWT-protected routes.  
-- **Transactions Management:** Centralized transaction model with unique references and metadata tracking.  
-- **Webhook Resilience:** Queue-based webhook retry system using **Celery + Redis**.  
-- **OTP Handling:** Endpoints for submitting OTPs (for Paystack no-redirect flows).  
-- **Metrics & Logging:** Per-gateway metrics for success/failure rates and response times.  
+- **Unified API Interface:** Interact with multiple gateways (Paystack, Moniepoint) through a consistent set of endpoints.
+- **Gateway Abstraction Layer:** Easily extend to new providers by subclassing the `PaymentsService`.
+- **Secure Authentication:** Email + password authentication with JWT-protected routes.
+- **Transactions Management:** Centralized transaction model with unique references and metadata tracking.
+- **Webhook Resilience:** Queue-based webhook retry system using **Celery + Redis**.
+- **OTP Handling:** Endpoints for submitting OTPs (for Paystack no-redirect flows).
+- **Metrics & Logging:** Per-gateway metrics for success/failure rates and response times.
 - **API Documentation:** OpenAPI 3.0 via Swagger UI (`/apidocs`).
 
 ---
 
-## 🧩 Tech Stack
+## Tech Stack
 
-| Layer | Tech |
-|-------|------|
-| Framework | Flask |
-| Auth | JWT (PyJWT) |
-| ORM | SQLAlchemy |
-| Queue | Celery + Redis |
-| Database | SQLite (dev), PostgreSQL/MySQL (prod) |
-| API Docs | Flasgger (Swagger UI) |
-| Task Scheduling | Celery Beat |
-| Environment | python-dotenv |
+| Layer       | Tech                                  |
+| ----------- | ------------------------------------- |
+| Framework   | Flask                                 |
+| Auth        | JWT (PyJWT)                           |
+| ORM         | SQLAlchemy                            |
+| Database    | SQLite (dev), PostgreSQL/MySQL (prod) |
+| API Docs    | Flasgger (Swagger UI)                 |
+| Environment | python-dotenv                         |
 
 ---
 
@@ -57,24 +55,28 @@ REDIS_URL=redis://localhost:6379/0
 ```
 
 ## Clone the repository
+
 `git clone https://github.com/duowork/payment-orchestration-backend.git`
 
 `cd payment-orchestration-backend`
 
 ## Create a virtual environment
+
 `python3 -m venv venv`
 `source venv/bin/activate`
 
 ## Install dependencies
+
 `pip install -r requirements.txt`
 
 <!-- ## Run database migrations (if using Alembic)
 `flask db upgrade` -->
 
 ## Start the Flask app
+
 `flask run`
 
-<!--  
+<!--
 ## Endpoint implementation
 
 | Method | Endpoint               | Description                              | Auth |
@@ -111,12 +113,12 @@ docker run -p 5000:5000 --env-file .env payment-orchestration-backend
 -->
 
 ## Extending Gateway
+
 1. Create a new file in payments/ (e.g., flutterwave.py).
 2. Subclass `PaymentsService` and implement:
-    - `initialize_charge()`
-    - `verify_payment()`
-    - `handle_webhook()`
-
+   - `initialize_charge()`
+   - `verify_payment()`
+   - `handle_webhook()`
 
 ```python
 class FlutterwaveService(PaymentsService):
@@ -141,6 +143,6 @@ class FlutterwaveService(PaymentsService):
 ## Author
 
 Built by Romeo Peter — software developer & Product Strategist.<br />
-📍 Abuja, Nigeria <br />
-🔗 [duowork.tech](duowork.tech) <br />
+Abuja, Nigeria <br />
+[duowork.tech](duowork.tech) <br />
 -->

@@ -9,11 +9,13 @@ load_dotenv()
 class Config:
     """Server configuration"""
 
-    SWAGGER = {"title": "Payment Orchestration API", "uiversion": 3, "openapi": "3.0.2"}
+    SWAGGER = {"title": "Kurudu Payment Orchestration API", "uiversion": 3, "openapi": "3.0.2"}
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
 
     # SQLALCHEMY
-    SQLALCHEMY_DATABASE_URI = "sqlite:///db.sqlite3"
+    # In production, set DATABASE_URL to your Postgres/MySQL string.
+    # Default is a local SQLite database for quick testing.
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Paystack
